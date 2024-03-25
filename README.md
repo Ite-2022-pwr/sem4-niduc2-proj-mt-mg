@@ -12,8 +12,8 @@
 - Każda nastepna liczba _pseudolosowa_ jest zależna od poprzedniej.
 
 
-$$for\:i = 0, 1, 2,...$$
-$$R_{i+1} = (aR_i + C)\:mod\:m $$
+    $$for\:i = 0, 1, 2,...$$
+    $$R_{i+1} = (aR_i + C)\:mod\:m$$
 
 
 - Gdzie:
