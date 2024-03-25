@@ -28,7 +28,7 @@ $$R_{i+1} = (aR_i + C)\:mod\:m $$
     $$c \geq 0$$
     $$m > c$$
     $$m > R_0$$
-    $$ m-1 \geq R_i > 0$$
+    $$m-1 \geq R_i > 0$$
 
 - Aby oblicyć odpowiadającą pseudolosową liczbę jednostajną, używamy nastpującego wzoru:
 
