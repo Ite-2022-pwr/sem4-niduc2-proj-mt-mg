@@ -30,7 +30,7 @@ $$R_{i+1} = (aR_i + C)\:mod\:m $$
     $$m > R_0$$
     $$m-1 \geq R_i > 0$$
 
-- Aby oblicyć odpowiadającą pseudolosową liczbę jednostajną, używamy nastpującego wzoru:
+- Aby obliczyć odpowiadającą pseudolosową liczbę jednostajną, używamy nastpującego wzoru:
 
 $$U_i = \frac{R_i}{m-1} $$
 
