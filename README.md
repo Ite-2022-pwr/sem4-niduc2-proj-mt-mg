@@ -13,7 +13,7 @@
 
 
     $$for\:i = 0, 1, 2,...$$
-    $$R_{i+1} = (aR_i + C) \mod m$$
+    $$R_{i+1} = (aR_i + C)\mod m$$
 
 
 - Gdzie:
