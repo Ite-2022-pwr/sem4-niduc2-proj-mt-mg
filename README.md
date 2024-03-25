@@ -7,7 +7,7 @@
     - dr inż. Dominik Żelazny
 
 ## [LCG (Linear congruential generator)](https://github.com/Hue1337/NIDUC-2/blob/main/src/RandomNumberGenerator.py):
-- Rekurencyjny algorytm do generowania liczb pseudolowych.
+- Matematyczny wzór używany do generowania liczb _pseudolosowych_.
 
 - Każda nastepna liczba _pseudolosowa_ jest zależna od poprzedniej.
 
