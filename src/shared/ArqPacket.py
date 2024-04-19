@@ -5,7 +5,7 @@ class ArqPacket:
     """
     Class representing an ARQ packet. It contains:
     - pck_type: packet type (0 - data; 1 -  management)
-    - msg_type: message type (0- data 1 - ACK, 2 - NACK, 3 - REQ, 4 - REQ-ACK, 5 - FIN, 6 - FIN-ACK)
+    - msg_type: message type (0- data 1 - ACK, 2 - NACK, 3 - SYN, 4 - SYN-ACK, 5 - FIN, 6 - FIN-ACK)
     - seq: sequence number
     - data: data to be sent (bytes)
     - checksum: checksum of the packet
