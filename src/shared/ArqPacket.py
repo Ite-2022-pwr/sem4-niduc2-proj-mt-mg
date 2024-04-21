@@ -36,10 +36,10 @@ class ArqPacket:
         return f"pck_type: {self.pck_type}, msg_type: {self.msg_type} seq: {self.seq}, data: {self.data}, checksum: {self.checksum}"
 
 
-    def check_checksum(self):
-        return binascii.crc32(self.data) == self.checksum
+    def checkChecksum(self):
+        return binascii.crc32(self.getData()) == self.checksum
 
-    def to_bytes(self):
+    def toBytes(self):
         # In order to send it via udp socket, we need to convert it to bytes
         data_len = len(self.data)
         fmt = f'iii{data_len}sI' # Format of the packet
@@ -47,7 +47,7 @@ class ArqPacket:
 
 
     @classmethod
-    def from_bytes(cls, bytes_data):
+    def fromBytes(cls, bytes_data):
         expected_size = struct.calcsize('iii{}sI'.format(len(bytes_data)-16))
         if len(bytes_data) != expected_size:
             raise ValueError(f"Invalid bytes_data size. Expected {expected_size}, got {len(bytes_data)}")
@@ -55,12 +55,12 @@ class ArqPacket:
         return cls(pck_type, msg_type, seq, data, checksum)
 
 
-    def show_data(self):
-        return self.data
+    def getData(self):
+        return self.data.rstrip(b'\00')
 
 
-    def decode_data(self):
-        return self.data.decode('utf-8')
+    def decodeData(self):
+        return self.data.rstrip(b'\00').decode('utf-8')
 
 
 

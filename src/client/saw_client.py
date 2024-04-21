@@ -1,10 +1,11 @@
 import socket
 from shared.ArqPacket import ArqPacket
+import shared.Arq as Arq
 
 
 HOST = "localhost"  # The server's hostname or IP address
 PORT = 65432        # Port for data
-buffer_size = 16
+arq_buffer_size = Arq.arq_buffer_size
 
 
 
@@ -15,7 +16,8 @@ def handle_packet(data, addr):
 
 
 if __name__ == "__main__":
-    message = "Hello, msg from client that exceeds buffer for sure!".encode()
+    message = Arq.lorem.encode()
+    #message = "Hello, msg from client that exceeds buffer for sure!".encode()
 
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -25,16 +27,8 @@ if __name__ == "__main__":
         # We have to create a connection between client and server. 
         # Send REQ packet and wait for REQ-ACK before sending any data.
         # TODO: Finish the implementation        
-        connected = False
 
-        while (not connected):
-            s.sendto(ArqPacket(1, 3, 1, b"SYN").to_bytes(), (HOST, PORT))
-            data, addr = s.recvfrom(buffer_size)
-            packet = ArqPacket.from_bytes(data)
-            if (packet.msg_type == 4):
-                print(f"Received SYN-ACK message: {packet} from {addr}")
-                connected = True
-
+        connected = Arq.startTransmission(s,arq_buffer_size,HOST,PORT)
 
         # We have to divide the message into chunks, because the buffer size is limited
         # Every new chunk sent will increase the sequence number
@@ -45,25 +39,23 @@ if __name__ == "__main__":
         seq = 1 
         s.settimeout(1)
 
+        Arq.sendChecksum(s,message,arq_buffer_size,HOST,PORT) # send checksum of the whole message. We are not going to proceed unitl this is sent and acknowledged.
+
+
         while bytes_sent < len(message):
             tout_count = 0
-            print(f"bytes_sent: {bytes_sent}   chunk: {message[bytes_sent:bytes_sent+buffer_size]}")
-            chunk = message[bytes_sent:seq*buffer_size]
-            packet = ArqPacket(0, 0, seq, chunk).to_bytes()
-            s.sendto(packet, (HOST, PORT))
-            print(f"Sent {bytes_sent} msg bytes: {chunk}")
-            print(f"Packet size: {len(packet)}")
             
+            chunk, chunk_len = Arq.sendMsgSeq(s,bytes_sent,seq,message,arq_buffer_size,HOST,PORT)
             # Wait for ACK
             while True:
                 try:
-                    data, addr = s.recvfrom(buffer_size)
-                    packet = ArqPacket.from_bytes(data)
+                    data, addr = s.recvfrom(arq_buffer_size)
+                    packet = ArqPacket.fromBytes(data)
                     print(f"Received : {packet}")
 
                     if (packet.msg_type == 1):
                         print(f"Received ACK message: {packet} from {addr}")
-                        bytes_sent += len(chunk)
+                        bytes_sent += chunk_len
                         seq += 1
                         break
                     elif (packet.msg_type == 2):
@@ -83,8 +75,7 @@ if __name__ == "__main__":
 
         
         ### END OF TRANSMISION, send FIN msg
-
-        s.sendto(ArqPacket(1, 5, 1, b"FIN").to_bytes(), (HOST, PORT))
+        Arq.endTransmission(s,arq_buffer_size,HOST,PORT)
 
 
 

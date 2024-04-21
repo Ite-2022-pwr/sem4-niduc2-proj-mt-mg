@@ -1,11 +1,12 @@
 import socket
 import threading
 from shared.ArqPacket import ArqPacket
+import shared.Arq as Arq
 import time
 
 HOST = "localhost"  # Standard loopback interface address (localhost)
 PORT = 65432        # Port for data
-buffer_size = 1024
+buffer_size = Arq.socket_buffer_size
 
 message = b"Hello, msg from server!"
 msg_dict = {}
@@ -17,18 +18,18 @@ def print_dict(msg_dict):
 
 
 def handle_packet(data, addr):
-    packet = ArqPacket.from_bytes(data)
+    packet = ArqPacket.fromBytes(data)
 
     if (packet.msg_type == 0): # If this is data message, we are going to add this do the dict
-        if packet.check_checksum():
-            msg_dict[packet.seq] = packet.data
+        if packet.checkChecksum():
+            msg_dict[packet.seq] = packet.getData()
             #time.sleep(3)
             # Send ACK
-            s.sendto(ArqPacket(1, 1, packet.seq, b"ACK").to_bytes(), addr)
+            s.sendto(ArqPacket(1, 1, packet.seq, b"ACK").toBytes(), addr)
             print(f"Sending ACK to {addr}")
         else:
             print(f"Checksum failed for packet {packet}")
-            s.sendto(ArqPacket(1, 2, packet.seq, b"NACK").to_bytes(), addr)
+            s.sendto(ArqPacket(1, 2, packet.seq, b"NACK").toBytes(), addr)
 
     elif (packet.msg_type == 3):
         print(f"Received SYN message: {str(packet)} from {addr}")
@@ -36,14 +37,17 @@ def handle_packet(data, addr):
         #So we are assembling new transmission message
         msg_dict.clear()
         # Send SYN-ACK
-        s.sendto(ArqPacket(1, 4, 1, b"SYN-ACK").to_bytes(), addr)
+        s.sendto(ArqPacket(1, 4, 1, b"SYN-ACK").toBytes(), addr)
 
 
     elif (packet.msg_type == 5):
         print(f"Received FIN message: {str(packet)} from {addr}")
         # Send FIN-ACK
-        s.sendto(ArqPacket(1, 6, 1, b"FIN-ACK").to_bytes(), addr)
-        print_dict(msg_dict)    # ended transmission so we can assemble the message
+        s.sendto(ArqPacket(1, 6, 1, b"FIN-ACK").toBytes(), addr)
+        # Reassmble message
+        print(f"Reassembled message: {Arq.reassembleMsg(msg_dict)}")
+        # Arq.printDict(msg_dict)    # ended transmission so we can assemble the message
+
 
 
     else:
