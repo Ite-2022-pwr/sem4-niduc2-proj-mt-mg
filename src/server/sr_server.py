@@ -1,4 +1,6 @@
 import socket
+import struct
+import binascii
 import threading
 from shared.ArqPacket import ArqPacket
 import time
@@ -9,6 +11,20 @@ buffer_size = 1024
 window_size = 4 # window size for sliding window protocol must be the same on both sides
 message = b"Hello, msg from server!"
 msg_dict = {}
+
+
+
+def reassembleMsg(msg_dict):
+    msg = b""
+    cheksum = struct.unpack('>I',msg_dict[0])[0]
+    seq = 1
+    while seq in msg_dict:
+        msg += msg_dict[seq]
+        seq += 1
+
+    if (binascii.crc32(msg) != cheksum):
+        print(f"Checksum failed")
+    return msg
 
 
 def print_dict(msg_dict):
@@ -34,7 +50,7 @@ def handle_packet(data, addr):
         print(f"Received SYN message: {str(packet)} from {addr}")
         #Clear dict // T is only temporary solution, later smth bettwe will be implemented
         #So we are assembling new transmission message
-        msg_dict.clear()
+        #msg_dict.clear()
         # Send SYN-ACK
         s.sendto(ArqPacket(1, 4, 1, b"SYN-ACK").to_bytes(), addr)
 
@@ -43,8 +59,11 @@ def handle_packet(data, addr):
         print(f"Received FIN message: {str(packet)} from {addr}")
         # Send FIN-ACK
         s.sendto(ArqPacket(1, 6, 1, b"FIN-ACK").to_bytes(), addr)
+        # Reassmble message
+        print(f"Reassembled message: {reassembleMsg(msg_dict)}")
         print_dict(msg_dict)    # ended transmission so we can assemble the message
 
+        msg_dict.clear()
 
     else:
         print(f"Received unhandled message: {str(packet)} from {addr}")
