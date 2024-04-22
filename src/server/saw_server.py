@@ -1,7 +1,14 @@
 import socket
 import threading
-from shared.ArqPacket import ArqPacket
-import shared.Arq as Arq
+
+import sys
+sys.path.insert(0, './../shared')
+from ArqPacket import ArqPacket
+import Arq as Arq
+
+# from shared.ArqPacket import ArqPacket
+# import shared.Arq as Arq
+
 import time
 
 HOST = "localhost"  # Standard loopback interface address (localhost)
@@ -10,15 +17,26 @@ buffer_size = Arq.socket_buffer_size
 
 message = b"Hello, msg from server!"
 msg_dict = {}
-
+st1 = 0
 
 def print_dict(msg_dict):
     for key in msg_dict:
         print(f"Seq: {key} data: {msg_dict[key]}")
 
-
+i = -1
 def handle_packet(data, addr):
+    global st1
+    global i 
     packet = ArqPacket.fromBytes(data)
+    time.sleep(0.02)
+    ## TODO only for test
+    i += 1
+    if (i % 30 == 2):
+        print(f"Packet {packet.seq} lost")
+        return
+
+    st = time.time()
+
 
     if (packet.msg_type == 0): # If this is data message, we are going to add this do the dict
         if packet.checkChecksum():
@@ -36,6 +54,7 @@ def handle_packet(data, addr):
         #Clear dict // T is only temporary solution, later smth bettwe will be implemented
         #So we are assembling new transmission message
         msg_dict.clear()
+        st1 = time.time()
         # Send SYN-ACK
         s.sendto(ArqPacket(1, 4, 1, b"SYN-ACK").toBytes(), addr)
 
@@ -43,11 +62,15 @@ def handle_packet(data, addr):
     elif (packet.msg_type == 5):
         print(f"Received FIN message: {str(packet)} from {addr}")
         # Send FIN-ACK
-        s.sendto(ArqPacket(1, 6, 1, b"FIN-ACK").toBytes(), addr)
         # Reassmble message
+        reassembled_msg, checksum_check = Arq.reassembleMsg(msg_dict)
+        if (checksum_check):
+            print(f"Checksum check passed")
+            s.sendto(ArqPacket(1, 6, 1, b"FIN-ACK").toBytes(), addr)
+            print(f"Received msg in {(time.time()-st1) * 1000} ms")
         print(f"Reassembled message: {Arq.reassembleMsg(msg_dict)}")
         # Arq.printDict(msg_dict)    # ended transmission so we can assemble the message
-
+    
 
 
     else:
@@ -56,6 +79,8 @@ def handle_packet(data, addr):
 
 
     print(f"Received data message: {str(packet)} from {addr}")
+    print(f"Packet handled in: {(time.time()-st) * 1000} ms")
+
 
 def handle_data_stream(s_data):
     while True:

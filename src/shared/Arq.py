@@ -14,11 +14,10 @@ from ArqPacket import ArqPacket
 
 ### GLOBAL VARIABLES ###
 socket_buffer_size = 1024
-socket_timeout = 0.5
 arq_buffer_size = 16
-arq_window_size = 5
-lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer mi ante, ultrices molestie bibendum ut, accumsan ut metus. In ac maximus erat. Aliquam porta, magna id convallis euismod, nunc tellus blandit ipsum, vel bibendum tortor urna ac nulla gravida."
-
+arq_window_size = 16
+timeout = 0.5
+lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ac porta ligula. Morbi semper venenatis ullamcorper. Quisque dignissim mi et vestibulum feugiat. Nam luctus nisl magna, eget imperdiet purus blandit sed. Proin et laoreet metus. Aenean et lacus ac lacus blandit interdum. Cras aliquam ipsum hendrerit aliquet egestas.Quisque vel augue dui. Mauris tristique posuere odio, in aliquam magna iaculis eget. Vestibulum ut dolor finibus, egestas enim eget, elementum felis. Mauris tempor erat justo, ac rutrum sem congue eget. Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris pharetra gravida est eu tristique. Mauris eu est tincidunt, porta purus et, rutrum neque. Ut efficitur diam ac leo dictum dictum. Etiam justo massa, lacinia sed augue vel, interdum congue neque. Vivamus nulla sapien, iaculis eu ultrices nec, condimentum tempor orci. Proin ultricies quam lacus, consequat hendrerit dolor elementum vitae. Fusce ut elit a orci elementum imperdiet in ac arcu. Vivamus dignissim et ipsum mi."
 
 
 
@@ -39,6 +38,7 @@ def generatePacketLoss():
 
 def reassembleMsg(msg_dict):
     msg = b""
+    checksum_check = True
     cheksum = struct.unpack('>I',msg_dict[0])[0]
     seq = 1
     while seq in msg_dict:
@@ -47,7 +47,8 @@ def reassembleMsg(msg_dict):
 
     if (binascii.crc32(msg) != cheksum):
         print(f"Checksum failed")
-    return msg
+        checksum_check = False
+    return msg, checksum_check
 
 
 def printDict(msg_dict):
@@ -88,9 +89,10 @@ def sendChecksum(s, msg, buffer_size, host, port):
                 print(f"Received packet: {recv_packet}")
         except socket.timeout:
             tout_count += 1
-            print("Timeout")
-            if (tout_count > 3):
-                print("Too many timeouts, resending checksum")
+            print(f"Timeout, resending checksum: {checksum}")
+            s.sendto(packet, (host, port))
+            if (tout_count > 6):
+                print("Too many timeouts, disconnecting")
                 recv_buffer = False
             continue
 
@@ -108,14 +110,17 @@ def startTransmission(s, buffer_size, HOST, PORT):
                 recv_packet = ArqPacket.fromBytes(data)
                 if (recv_packet.pck_type == 1 and recv_packet.msg_type == 4):
                     print(f"Received SYN-ACK: {recv_packet}")
-                    return
+                    connected = True
+                    return connected
                 else:
                     print(f"Received packet: {recv_packet}")
             except socket.timeout:
                 tout_count += 1
-                print("Timeout")
-                if (tout_count > 3):
-                    print("Too many timeouts, resending SYN")
+                print("Timeout, resending")
+                s.sendto(ArqPacket(1, 3, 1, b"SYN").toBytes(), (HOST, PORT))
+
+                if (tout_count > 4):
+                    print("Too many timeouts, disconnecting")
                     recv_buffer = False
                 continue
     return connected
@@ -137,8 +142,10 @@ def endTransmission(s, buffer_size, HOST, PORT):
                 print(f"Received packet: {recv_packet}")
         except socket.timeout:
             tout_count += 1
-            print("Timeout")
-            if (tout_count > 3):
-                print("Too many timeouts, resending FIN")
+            print("Timeout, Resending FIN")
+            s.sendto(ArqPacket(1,5,-1,b"FIN").toBytes(), (HOST, PORT))
+            if (tout_count > 4):
+                print("Too many timeouts, disconnecting")
+
                 recv_buffer = False
             continue

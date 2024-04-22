@@ -1,6 +1,12 @@
 import socket
-from shared.ArqPacket import ArqPacket
-import shared.Arq as Arq
+import sys
+sys.path.insert(0, './shared')
+from ArqPacket import ArqPacket
+import Arq as Arq
+
+
+# from shared.ArqPacket import ArqPacket
+# import shared.Arq as Arq
 
 
 HOST = "localhost"  # The server's hostname or IP address
@@ -37,7 +43,7 @@ if __name__ == "__main__":
 
         bytes_sent = 0
         seq = 1 
-        s.settimeout(1)
+        s.settimeout(Arq.timeout)
 
         Arq.sendChecksum(s,message,arq_buffer_size,HOST,PORT) # send checksum of the whole message. We are not going to proceed unitl this is sent and acknowledged.
 
@@ -45,7 +51,7 @@ if __name__ == "__main__":
         while bytes_sent < len(message):
             tout_count = 0
             
-            chunk, chunk_len = Arq.sendMsgSeq(s,bytes_sent,seq,message,arq_buffer_size,HOST,PORT)
+            chunk_len, packet_len = Arq.sendMsgSeq(s,bytes_sent,seq,message,arq_buffer_size,HOST,PORT)
             # Wait for ACK
             while True:
                 try:
@@ -65,11 +71,8 @@ if __name__ == "__main__":
                         print(f"Received management message: {packet} from {addr}")
                 except socket.timeout:
                     print("Timeout")
-                    tout_count += 1
-                    if (tout_count > 3):
-                        print("Too many timeouts, resending packet seq {seq}")
-                        
-                        break
+                    print(f"Resending packet seq {seq}")
+                    break
         
 
 
