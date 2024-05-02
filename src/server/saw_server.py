@@ -2,12 +2,12 @@ import socket
 import threading
 
 import sys
-sys.path.insert(0, './../shared')
+sys.path.insert(0, './shared')
 from ArqPacket import ArqPacket
 import Arq as Arq
 
-# from shared.ArqPacket import ArqPacket
-# import shared.Arq as Arq
+from shared.ArqPacket import ArqPacket
+import shared.Arq as Arq
 
 import time
 
@@ -28,7 +28,7 @@ def handle_packet(data, addr):
     global st1
     global i 
     packet = ArqPacket.fromBytes(data)
-    time.sleep(0.02)
+    time.sleep(Arq.latency)
     ## TODO only for test
     i += 1
     if (i % 30 == 2):

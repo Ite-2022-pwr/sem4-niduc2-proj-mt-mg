@@ -5,8 +5,8 @@ from ArqPacket import ArqPacket
 import Arq as Arq
 
 
-# from shared.ArqPacket import ArqPacket
-# import shared.Arq as Arq
+from shared.ArqPacket import ArqPacket
+import shared.Arq as Arq
 
 
 HOST = "localhost"  # The server's hostname or IP address

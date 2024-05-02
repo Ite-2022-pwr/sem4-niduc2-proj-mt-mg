@@ -4,12 +4,12 @@ import binascii
 import threading
 
 import sys
-sys.path.insert(0, './../shared')
-from ArqPacket import ArqPacket
-import Arq as Arq
+# sys.path.insert(0, './shared')
+# from ArqPacket import ArqPacket
+# import Arq as Arq
 
-# from shared.ArqPacket import ArqPacket
-# import shared.Arq as Arq
+from shared.ArqPacket import ArqPacket
+import shared.Arq as Arq
 import time
 
 HOST = "localhost"  # Standard loopback interface address (localhost)
@@ -28,7 +28,7 @@ def handle_packet(data, addr):
     global st1
     global i 
     packet = ArqPacket.fromBytes(data)
-    time.sleep(0.041)
+    time.sleep(Arq.latency)
 
     ## TODO only for test
     i += 1

@@ -6,8 +6,8 @@ sys.path.insert(0, './shared')
 from ArqPacket import ArqPacket
 import Arq as Arq
 
-#rom shared.ArqPacket import * 
-#import shared.Arq as Arq
+from shared.ArqPacket import * 
+import shared.Arq as Arq
 import binascii
 
 

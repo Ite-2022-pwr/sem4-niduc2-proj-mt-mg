@@ -9,14 +9,15 @@ import sys
 sys.path.insert(0, './shared') # this is for vs code debugging ;d 
 from ArqPacket import ArqPacket
 
-#from shared.ArqPacket import ArqPacket
+from shared.ArqPacket import ArqPacket
 
 
 ### GLOBAL VARIABLES ###
 socket_buffer_size = 1024
 arq_buffer_size = 16
 arq_window_size = 16
-timeout = 0.5
+timeout = 0.6
+latency = 0.3
 lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ac porta ligula. Morbi semper venenatis ullamcorper. Quisque dignissim mi et vestibulum feugiat. Nam luctus nisl magna, eget imperdiet purus blandit sed. Proin et laoreet metus. Aenean et lacus ac lacus blandit interdum. Cras aliquam ipsum hendrerit aliquet egestas.Quisque vel augue dui. Mauris tristique posuere odio, in aliquam magna iaculis eget. Vestibulum ut dolor finibus, egestas enim eget, elementum felis. Mauris tempor erat justo, ac rutrum sem congue eget. Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris pharetra gravida est eu tristique. Mauris eu est tincidunt, porta purus et, rutrum neque. Ut efficitur diam ac leo dictum dictum. Etiam justo massa, lacinia sed augue vel, interdum congue neque. Vivamus nulla sapien, iaculis eu ultrices nec, condimentum tempor orci. Proin ultricies quam lacus, consequat hendrerit dolor elementum vitae. Fusce ut elit a orci elementum imperdiet in ac arcu. Vivamus dignissim et ipsum mi."
 
 
@@ -58,6 +59,9 @@ def printDict(msg_dict):
 
 
 def sendMsgSeq(s, bytes_sent, seq, msg, buffer_size, host, port):
+    # Adding sleep here to simulate network latency
+    time.sleep(latency)
+
     chunk = msg[(seq-1)*buffer_size:seq*buffer_size]
     packet = ArqPacket(0, 0, seq, chunk).toBytes()
     s.sendto(packet, (host, port))
