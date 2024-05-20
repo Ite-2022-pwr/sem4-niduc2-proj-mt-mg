@@ -12,7 +12,7 @@ import shared.Arq as Arq
 HOST = "localhost"  # The server's hostname or IP address
 PORT = 65432        # Port for data
 arq_buffer_size = Arq.arq_buffer_size
-
+packets_sent = 0
 
 
 
@@ -47,11 +47,13 @@ if __name__ == "__main__":
         seq = 1 
 
         Arq.sendChecksum(s,message,arq_buffer_size,HOST,PORT) # send checksum of the whole message. We are not going to proceed unitl this is sent and acknowledged.
+        packets_sent += 1
+        msg_len = len(message)
 
-
-        while bytes_sent < len(message):
+        while bytes_sent < msg_len:
             tout_count = 0
             chunk_len, packet_len = Arq.sendMsgSeq(s,bytes_sent,seq,message,arq_buffer_size,HOST,PORT)
+            packets_sent += 1
             # Wait for ACK
             while True:
                 try:
@@ -79,6 +81,10 @@ if __name__ == "__main__":
         
         ### END OF TRANSMISION, send FIN msg
         Arq.endTransmission(s,arq_buffer_size,HOST,PORT)
+        packets_sent += 1
+
+        print(f"{packets_sent},{msg_len//arq_buffer_size}")
+
 
 
 

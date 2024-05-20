@@ -19,7 +19,7 @@ window_size = Arq.arq_window_size # window size for sliding window protocol must
 bytes_sent = 0 
 seq_bytes_dict = {} # dict of seq number and bytes sent
 seq_sent = []# list of sent seq numbers in this window
-
+packets_sent = 0
 #### GLOBAL SETTINGS
 
 def handle_packet(data, addr):
@@ -31,6 +31,7 @@ def handle_ack(s):
     global bytes_sent
     global seq_bytes_dict
     global seq_sent
+    global packets_sent
     print("Waiting for ack")
     loop = True
     while seq_sent:
@@ -47,6 +48,7 @@ def handle_ack(s):
                     elif (recv_packet.msg_type == 2):
                         print(f"Received NACK from {addr}, resending packet seq {recv_packet.seq}")
                         Arq.sendMsgSeq(s,bytes_sent,recv_packet.seq,message,buffer_size,HOST,PORT)
+                        packets_sent += 1
                     elif (recv_packet.msg_type == 6):
                         print(f"Received FIN-ACK from {addr}")
                         loop = False
@@ -56,6 +58,7 @@ def handle_ack(s):
             except TimeoutError:
                 print(f"Timeout. Resending packet seq {seq_sent[0]}")
                 Arq.sendMsgSeq(s,bytes_sent,seq_sent[0],message,buffer_size,HOST,PORT)
+                packets_sent += 1
                 continue
 
 
@@ -82,6 +85,7 @@ if __name__ == "__main__":
         msg_len = len(message)
 
         Arq.sendChecksum(s,message,buffer_size,HOST,PORT)
+        packets_sent += 1
         while bytes_sent < len(message):
             tout_count = 0
 
@@ -92,6 +96,7 @@ if __name__ == "__main__":
                 seq += 1
             for tmp in seq_sent:
                 chunk_len, _ = Arq.sendMsgSeq(s,bytes_sent,tmp,message,buffer_size,HOST,PORT)
+                packets_sent += 1
                 seq_bytes_dict[tmp] = chunk_len
             handle_ack(s)
 
@@ -99,6 +104,7 @@ if __name__ == "__main__":
 
         #EndTransmission
         Arq.endTransmission(s, buffer_size, HOST, PORT)
+        print(f"{packets_sent},{msg_len//buffer_size}")
 
 
 

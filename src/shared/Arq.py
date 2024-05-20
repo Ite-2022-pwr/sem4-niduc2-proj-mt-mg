@@ -22,15 +22,6 @@ lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ac por
 pkt_loss = 10 # X% chance of packet loss
 random_values = RNG.RandomNumberGenerator(1000, 1000).gen_numbers()
 
-# remove this
-random_values[0] = 0
-random_values[1] = 0
-random_values[2] = 0
-
-
-socket.timeout=timeout
-
-print('t2')
 
 def generateLatency():
     # Function that generates network laterncy, for example it can just sleep for a x amount of time
@@ -104,13 +95,9 @@ def sendChecksum(s, msg, buffer_size, host, port):
                 print(f"Resent checksum: {checksum}")
             else:
                 print(f"Received packet: {recv_packet}")
-        except socket.timeout:
-            tout_count += 1
+        except TimeoutError:
             print(f"Timeout, resending checksum: {checksum}")
             s.sendto(packet, (host, port))
-            if (tout_count > 6):
-                print("Too many timeouts, disconnecting")
-                recv_buffer = False
             continue
 
 
@@ -146,7 +133,7 @@ def endTransmission(s, buffer_size, HOST, PORT):
     print("Sent FIN msg")
     recv_buffer = True
     tout_count = 0
-    while recv_buffer == True:
+    while True:
         try:
             data, addr = s.recvfrom(buffer_size)
             recv_packet = ArqPacket.fromBytes(data)
@@ -155,12 +142,7 @@ def endTransmission(s, buffer_size, HOST, PORT):
                 return
             else:
                 print(f"Received packet: {recv_packet}")
-        except socket.timeout:
-            tout_count += 1
+        except TimeoutError:
             print("Timeout, Resending FIN")
             s.sendto(ArqPacket(1,5,-1,b"FIN").toBytes(), (HOST, PORT))
-            if (tout_count > 4):
-                print("Too many timeouts, disconnecting")
-
-                recv_buffer = False
             continue
