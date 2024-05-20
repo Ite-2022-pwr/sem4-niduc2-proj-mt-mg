@@ -23,7 +23,8 @@ packets_sent = 0
 #### GLOBAL SETTINGS
 
 def handle_packet(data, addr):
-    print(f"Received data message: {data.decode()} from {addr}")
+    pass
+    #print(f"Received data message: {data.decode()} from {addr}")
 
 
 
@@ -32,7 +33,7 @@ def handle_ack(s):
     global seq_bytes_dict
     global seq_sent
     global packets_sent
-    print("Waiting for ack")
+    #print("Waiting for ack")
     loop = True
     while seq_sent:
             try:
@@ -40,23 +41,23 @@ def handle_ack(s):
                 recv_packet = ArqPacket.fromBytes(data)
                 if (recv_packet.pck_type == 1):
                     if (recv_packet.msg_type == 1):
-                        print(f"Received ACK message: {recv_packet} from {addr}")
+                        #print(f"Received ACK message: {recv_packet} from {addr}")
                         bytes_sent += seq_bytes_dict[recv_packet.seq] 
                         if (recv_packet.seq in seq_sent):
                             seq_sent.remove(recv_packet.seq)
                         continue
                     elif (recv_packet.msg_type == 2):
-                        print(f"Received NACK from {addr}, resending packet seq {recv_packet.seq}")
+                        #print(f"Received NACK from {addr}, resending packet seq {recv_packet.seq}")
                         Arq.sendMsgSeq(s,bytes_sent,recv_packet.seq,message,buffer_size,HOST,PORT)
                         packets_sent += 1
                     elif (recv_packet.msg_type == 6):
-                        print(f"Received FIN-ACK from {addr}")
+                        #print(f"Received FIN-ACK from {addr}")
                         loop = False
                     else:
-                        print(f"Received management message: {recv_packet} from {addr}")
+                        #print(f"Received management message: {recv_packet} from {addr}")
                         continue
             except TimeoutError:
-                print(f"Timeout. Resending packet seq {seq_sent[0]}")
+                #print(f"Timeout. Resending packet seq {seq_sent[0]}")
                 Arq.sendMsgSeq(s,bytes_sent,seq_sent[0],message,buffer_size,HOST,PORT)
                 packets_sent += 1
                 continue
@@ -70,7 +71,7 @@ if __name__ == "__main__":
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.settimeout(Arq.timeout)
-        print(f"Client started, using server {HOST} data port:{PORT}")  
+        #print(f"Client started, using server {HOST} data port:{PORT}")  
 
         connected = Arq.startTransmission(s,buffer_size,HOST,PORT)
 
@@ -104,6 +105,7 @@ if __name__ == "__main__":
 
         #EndTransmission
         Arq.endTransmission(s, buffer_size, HOST, PORT)
+        packets_sent += 1
         print(f"{packets_sent},{msg_len//buffer_size}")
 
 

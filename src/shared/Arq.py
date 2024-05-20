@@ -15,7 +15,7 @@ import RandomNumberGenerator as RNG
 ### GLOBAL VARIABLES ###
 socket_buffer_size = 1024
 arq_buffer_size = 16
-arq_window_size = 16
+arq_window_size = 32
 timeout = 0.4 # time before calling timeout resending packet
 latency = 0.2 # client and server will wait for 0.5 * latency seconds before sending packets
 lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ac porta ligula. Morbi semper venenatis ullamcorper. Quisque dignissim mi et vestibulum feugiat. Nam luctus nisl magna, eget imperdiet purus blandit sed. Proin et laoreet metus. Aenean et lacus ac lacus blandit interdum. Cras aliquam ipsum hendrerit aliquet egestas.Quisque vel augue dui. Mauris tristique posuere odio, in aliquam magna iaculis eget. Vestibulum ut dolor finibus, egestas enim eget, elementum felis. Mauris tempor erat justo, ac rutrum sem congue eget. Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris pharetra gravida est eu tristique. Mauris eu est tincidunt, porta purus et, rutrum neque. Ut efficitur diam ac leo dictum dictum. Etiam justo massa, lacinia sed augue vel, interdum congue neque. Vivamus nulla sapien, iaculis eu ultrices nec, condimentum tempor orci. Proin ultricies quam lacus, consequat hendrerit dolor elementum vitae. Fusce ut elit a orci elementum imperdiet in ac arcu. Vivamus dignissim et ipsum mi."
@@ -51,14 +51,15 @@ def reassembleMsg(msg_dict):
         seq += 1
 
     if (binascii.crc32(msg) != cheksum):
-        print(f"Checksum failed")
+        #print(f"Checksum failed")
         checksum_check = False
     return msg, checksum_check
 
 
 def printDict(msg_dict):
     for key in msg_dict:
-        print(f"Seq: {key} data: {msg_dict[key]}")
+        continue
+        #print(f"Seq: {key} data: {msg_dict[key]}")
 
 
 
@@ -69,8 +70,8 @@ def sendMsgSeq(s, bytes_sent, seq, msg, buffer_size, host, port):
     chunk = msg[(seq-1)*buffer_size:seq*buffer_size]
     packet = ArqPacket(0, 0, seq, chunk).toBytes()
     s.sendto(packet, (host, port))
-    print(f"Sent {bytes_sent} msg bytes: {chunk}")
-    print(f"Packet size: {len(packet)}")
+    #print(f"Sent {bytes_sent} msg bytes: {chunk}")
+    #print(f"Packet size: {len(packet)}")
     return len(chunk),len(packet) 
 
 
@@ -79,7 +80,7 @@ def sendChecksum(s, msg, buffer_size, host, port):
     checksum = struct.pack('>I',binascii.crc32(msg))
     packet = ArqPacket(0, 0, 0, checksum).toBytes()
     s.sendto(packet, (host, port))
-    print(f"Sent checksum: {checksum}")
+    #print(f"Sent checksum: {checksum}")
     recv_buffer = True
     tout_count = 0
     while recv_buffer == True:
@@ -87,23 +88,23 @@ def sendChecksum(s, msg, buffer_size, host, port):
             data, addr = s.recvfrom(buffer_size)
             recv_packet = ArqPacket.fromBytes(data)
             if (recv_packet.msg_type == 1 and recv_packet.seq == 0):
-                print(f"Received ACK for checksum: {recv_packet}")
+                #print(f"Received ACK for checksum: {recv_packet}")
                 return
             elif (recv_packet.msg_type == 2 and recv_packet.seq == 0):
-                print(f"Received NACK for checksum: {recv_packet}")
+                #print(f"Received NACK for checksum: {recv_packet}")
                 s.sendto(packet,addr) 
-                print(f"Resent checksum: {checksum}")
-            else:
-                print(f"Received packet: {recv_packet}")
+                #print(f"Resent checksum: {checksum}")
+            #else:
+                #print(f"Received packet: {recv_packet}")
         except TimeoutError:
-            print(f"Timeout, resending checksum: {checksum}")
+            #print(f"Timeout, resending checksum: {checksum}")
             s.sendto(packet, (host, port))
             continue
 
 
 def startTransmission(s, buffer_size, HOST, PORT):
     connected = False
-    print('trying connect')
+    #print('trying connect')
     while (not connected):
 
         s.sendto(ArqPacket(1, 3, 1, b"SYN").toBytes(), (HOST, PORT))
@@ -111,26 +112,26 @@ def startTransmission(s, buffer_size, HOST, PORT):
             try:
                 data, addr = s.recvfrom(buffer_size)
                 recv_packet = ArqPacket.fromBytes(data)
-                print(recv_packet)
+                #print(recv_packet)
                 if (recv_packet.pck_type == 1 and recv_packet.msg_type == 4):
-                    print(f"Received SYN-ACK: {recv_packet}")
-                    print('connected')
+                    #print(f"Received SYN-ACK: {recv_packet}")
+                    #print('connected')
                     connected = True
                     return connected
-                else:
-                    print(f"Received packet: {recv_packet}")
+                #else:
+                    #print(f"Received packet: {recv_packet}")
             except TimeoutError:
-                print('Timeout while connecting')
+                #print('Timeout while connecting')
                 break
     
 
-    print('connected')
+    #print('connected')
     return connected
 
 
 def endTransmission(s, buffer_size, HOST, PORT):
     s.sendto(ArqPacket(1,5,-1,b"FIN").toBytes(), (HOST, PORT))
-    print("Sent FIN msg")
+    #print("Sent FIN msg")
     recv_buffer = True
     tout_count = 0
     while True:
@@ -138,11 +139,11 @@ def endTransmission(s, buffer_size, HOST, PORT):
             data, addr = s.recvfrom(buffer_size)
             recv_packet = ArqPacket.fromBytes(data)
             if (recv_packet.pck_type == 1 and recv_packet.msg_type == 6):
-                print(f"Received FIN-ACK: {recv_packet}")
+                #print(f"Received FIN-ACK: {recv_packet}")
                 return
-            else:
-                print(f"Received packet: {recv_packet}")
+            #else:
+                #print(f"Received packet: {recv_packet}")
         except TimeoutError:
-            print("Timeout, Resending FIN")
+            #print("Timeout, Resending FIN")
             s.sendto(ArqPacket(1,5,-1,b"FIN").toBytes(), (HOST, PORT))
             continue

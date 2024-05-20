@@ -15,13 +15,15 @@ HOST = "localhost"  # Standard loopback interface address (localhost)
 PORT = 65432        # Port for data
 buffer_size = Arq.socket_buffer_size
 
+socket_buffer_size = 1024
 message = b"Hello, msg from server!"
 msg_dict = {}
 st1 = 0
 
 def print_dict(msg_dict):
     for key in msg_dict:
-        print(f"Seq: {key} data: {msg_dict[key]}")
+        pass
+        #print(f"Seq: {key} data: {msg_dict[key]}")
 
 i = -1
 def handle_packet(data, addr):
@@ -30,10 +32,10 @@ def handle_packet(data, addr):
     packet = ArqPacket.fromBytes(data)
     time.sleep(Arq.latency//2)
 
+    i += 1
     # Just to prevent out of bounds
     if (i >= Arq.random_values.__len__()):
         i = 0
-    i += 1
 
     ## packet loss
     if Arq.generatePacketLoss(i):
@@ -48,13 +50,13 @@ def handle_packet(data, addr):
             #time.sleep(3)
             # Send ACK
             s.sendto(ArqPacket(1, 1, packet.seq, b"ACK").toBytes(), addr)
-            print(f"Sending ACK to {addr}")
+            #print(f"Sending ACK to {addr}")
         else:
-            print(f"Checksum failed for packet {packet}")
+            #print(f"Checksum failed for packet {packet}")
             s.sendto(ArqPacket(1, 2, packet.seq, b"NACK").toBytes(), addr)
 
     elif (packet.msg_type == 3):
-        print(f"Received SYN message: {str(packet)} from {addr}")
+        #print(f"Received SYN message: {str(packet)} from {addr}")
         #Clear dict // T is only temporary solution, later smth bettwe will be implemented
         #So we are assembling new transmission message
         msg_dict.clear()
@@ -64,31 +66,33 @@ def handle_packet(data, addr):
 
 
     elif (packet.msg_type == 5):
-        print(f"Received FIN message: {str(packet)} from {addr}")
+        #print(f"Received FIN message: {str(packet)} from {addr}")
         # Send FIN-ACK
         # Reassmble message
         reassembled_msg, checksum_check = Arq.reassembleMsg(msg_dict)
         if (checksum_check):
-            print(f"Checksum check passed")
+            #print(f"Checksum check passed")
             s.sendto(ArqPacket(1, 6, 1, b"FIN-ACK").toBytes(), addr)
-            print(f"Received msg in {(time.time()-st1) * 1000} ms")
-        print(f"Reassembled message: {Arq.reassembleMsg(msg_dict)}")
+            overall_time = (time.time()-st1) * 1000
+            print("{:.2f}".format(overall_time))
+            #print(f"Received msg in {(time.time()-st1) * 1000} ms")
+        #print(f"Reassembled message: {Arq.reassembleMsg(msg_dict)}")
         # Arq.printDict(msg_dict)    # ended transmission so we can assemble the message
     
 
 
-    else:
-        print(f"Received unhandled message: {str(packet)} from {addr}")
+    #else:
+        #print(f"Received unhandled message: {str(packet)} from {addr}")
 
 
 
-    print(f"Received data message: {str(packet)} from {addr}")
-    print(f"Packet handled in: {(time.time()-st) * 1000} ms")
+    #print(f"Received data message: {str(packet)} from {addr}")
+    #print(f"Packet handled in: {(time.time()-st) * 1000} ms")
 
 
 def handle_data_stream(s_data):
     while True:
-        print("Waiting for data")
+        #print("Waiting for data")
         data, addr = s_data.recvfrom(buffer_size)
         handle_packet(data, addr)
 
@@ -100,12 +104,17 @@ if __name__ == "__main__":
 
         
 
-        print(f"Server started, data port:{PORT}")  
+        #print(f"Server started, data port:{PORT}")  
+        #s.bind((HOST, PORT))
+
         s.bind((HOST, PORT))
+        while True:
+            #print("Waiting for data")
+            data, addr = s.recvfrom(socket_buffer_size)
+            handle_packet(data, addr)
+        #data_thread = threading.Thread(target=handle_data_stream, args=(s,))
 
-        data_thread = threading.Thread(target=handle_data_stream, args=(s,))
+        #data_thread.start()
 
-        data_thread.start()
-
-        data_thread.join()
+        #data_thread.join()
 

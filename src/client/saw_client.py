@@ -1,8 +1,8 @@
 import socket
 import sys
 sys.path.insert(0, './shared')
-from ArqPacket import ArqPacket
-import Arq as Arq
+#from ArqPacket import ArqPacket
+#import Arq as Arq
 
 
 from shared.ArqPacket import ArqPacket
@@ -17,7 +17,8 @@ packets_sent = 0
 
 
 def handle_packet(data, addr):
-    print(f"Received data message: {data.decode()} from {addr}")
+    pass
+    #print(f"Received data message: {data.decode()} from {addr}")
 
 
 
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
 
         s.settimeout(Arq.timeout)
-        print(f"Client started, using server {HOST} data port:{PORT}")  
+        #print(f"Client started, using server {HOST} data port:{PORT}")  
         
         # We have to create a connection between client and server. 
         # Send REQ packet and wait for REQ-ACK before sending any data.
@@ -37,7 +38,7 @@ if __name__ == "__main__":
 
         connected = Arq.startTransmission(s,arq_buffer_size,HOST,PORT)
 
-        print('t')
+        #print('t')
         # We have to divide the message into chunks, because the buffer size is limited
         # Every new chunk sent will increase the sequence number
         # Thanks to that sequence number, the server will be able to reconstruct the message even if it got in different order
@@ -59,21 +60,21 @@ if __name__ == "__main__":
                 try:
                     data, addr = s.recvfrom(arq_buffer_size)
                     packet = ArqPacket.fromBytes(data)
-                    print(f"Received : {packet}")
+                    #print(f"Received : {packet}")
 
                     if (packet.msg_type == 1):
-                        print(f"Received ACK message: {packet} from {addr}")
+                        #print(f"Received ACK message: {packet} from {addr}")
                         bytes_sent += chunk_len
                         seq += 1
                         break
                     elif (packet.msg_type == 2):
-                        print(f"Received NACK from {addr}, resending packet seq {packet.seq}")
+                        #print(f"Received NACK from {addr}, resending packet seq {packet.seq}")
                         break
-                    else:
-                        print(f"Received management message: {packet} from {addr}")
+                    #else:
+                        #print(f"Received management message: {packet} from {addr}")
                 except TimeoutError:
-                    print("Timeout")
-                    print(f"Resending packet seq {seq}")
+                    #print("Timeout")
+                    #print(f"Resending packet seq {seq}")
                     break
         
 
