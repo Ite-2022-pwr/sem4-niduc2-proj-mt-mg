@@ -53,7 +53,7 @@ def handle_ack(s):
                     else:
                         print(f"Received management message: {recv_packet} from {addr}")
                         continue
-            except socket.timeout:
+            except TimeoutError:
                 print(f"Timeout. Resending packet seq {seq_sent[0]}")
                 Arq.sendMsgSeq(s,bytes_sent,seq_sent[0],message,buffer_size,HOST,PORT)
                 continue

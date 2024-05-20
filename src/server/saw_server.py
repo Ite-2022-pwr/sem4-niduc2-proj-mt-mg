@@ -3,8 +3,8 @@ import threading
 
 import sys
 sys.path.insert(0, './shared')
-from ArqPacket import ArqPacket
-import Arq as Arq
+#from ArqPacket import ArqPacket
+#import Arq as Arq
 
 from shared.ArqPacket import ArqPacket
 import shared.Arq as Arq
@@ -28,11 +28,15 @@ def handle_packet(data, addr):
     global st1
     global i 
     packet = ArqPacket.fromBytes(data)
-    time.sleep(Arq.latency)
-    ## TODO only for test
+    time.sleep(Arq.latency//2)
+
+    # Just to prevent out of bounds
+    if (i >= Arq.random_values.__len__()):
+        i = 0
     i += 1
-    if (i % 30 == 2):
-        print(f"Packet {packet.seq} lost")
+
+    ## packet loss
+    if Arq.generatePacketLoss(i):
         return
 
     st = time.time()

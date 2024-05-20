@@ -28,6 +28,7 @@ if __name__ == "__main__":
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
 
+        s.settimeout(Arq.timeout)
         print(f"Client started, using server {HOST} data port:{PORT}")  
         
         # We have to create a connection between client and server. 
@@ -36,6 +37,7 @@ if __name__ == "__main__":
 
         connected = Arq.startTransmission(s,arq_buffer_size,HOST,PORT)
 
+        print('t')
         # We have to divide the message into chunks, because the buffer size is limited
         # Every new chunk sent will increase the sequence number
         # Thanks to that sequence number, the server will be able to reconstruct the message even if it got in different order
@@ -43,14 +45,12 @@ if __name__ == "__main__":
 
         bytes_sent = 0
         seq = 1 
-        s.settimeout(Arq.timeout)
 
         Arq.sendChecksum(s,message,arq_buffer_size,HOST,PORT) # send checksum of the whole message. We are not going to proceed unitl this is sent and acknowledged.
 
 
         while bytes_sent < len(message):
             tout_count = 0
-            
             chunk_len, packet_len = Arq.sendMsgSeq(s,bytes_sent,seq,message,arq_buffer_size,HOST,PORT)
             # Wait for ACK
             while True:
@@ -69,7 +69,7 @@ if __name__ == "__main__":
                         break
                     else:
                         print(f"Received management message: {packet} from {addr}")
-                except socket.timeout:
+                except TimeoutError:
                     print("Timeout")
                     print(f"Resending packet seq {seq}")
                     break

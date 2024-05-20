@@ -10,29 +10,42 @@ sys.path.insert(0, './shared') # this is for vs code debugging ;d
 from ArqPacket import ArqPacket
 
 from shared.ArqPacket import ArqPacket
-
+import RandomNumberGenerator as RNG
 
 ### GLOBAL VARIABLES ###
 socket_buffer_size = 1024
 arq_buffer_size = 16
 arq_window_size = 16
-timeout = 0.6
-latency = 0.3
+timeout = 0.4 # time before calling timeout resending packet
+latency = 0.2 # client and server will wait for 0.5 * latency seconds before sending packets
 lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ac porta ligula. Morbi semper venenatis ullamcorper. Quisque dignissim mi et vestibulum feugiat. Nam luctus nisl magna, eget imperdiet purus blandit sed. Proin et laoreet metus. Aenean et lacus ac lacus blandit interdum. Cras aliquam ipsum hendrerit aliquet egestas.Quisque vel augue dui. Mauris tristique posuere odio, in aliquam magna iaculis eget. Vestibulum ut dolor finibus, egestas enim eget, elementum felis. Mauris tempor erat justo, ac rutrum sem congue eget. Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris pharetra gravida est eu tristique. Mauris eu est tincidunt, porta purus et, rutrum neque. Ut efficitur diam ac leo dictum dictum. Etiam justo massa, lacinia sed augue vel, interdum congue neque. Vivamus nulla sapien, iaculis eu ultrices nec, condimentum tempor orci. Proin ultricies quam lacus, consequat hendrerit dolor elementum vitae. Fusce ut elit a orci elementum imperdiet in ac arcu. Vivamus dignissim et ipsum mi."
+pkt_loss = 10 # X% chance of packet loss
+random_values = RNG.RandomNumberGenerator(1000, 1000).gen_numbers()
+
+# remove this
+random_values[0] = 0
+random_values[1] = 0
+random_values[2] = 0
 
 
+socket.timeout=timeout
 
+print('t2')
 
 def generateLatency():
     # Function that generates network laterncy, for example it can just sleep for a x amount of time
-    
     pass
 
 
-def generatePacketLoss():
-    # Function that generates packet loss, for example it can just not send a packet
-    # it can utilize our RNG to determine if a packet is lost or not
-    pass
+def generatePacketLoss(index):
+    # return true if packet loss should occur. 
+
+    if (random_values[index] < pkt_loss*10):
+        return True
+    else:
+        return False
+        
+
 
 
 
@@ -60,7 +73,7 @@ def printDict(msg_dict):
 
 def sendMsgSeq(s, bytes_sent, seq, msg, buffer_size, host, port):
     # Adding sleep here to simulate network latency
-    time.sleep(latency)
+    time.sleep(latency//2)
 
     chunk = msg[(seq-1)*buffer_size:seq*buffer_size]
     packet = ArqPacket(0, 0, seq, chunk).toBytes()
@@ -103,30 +116,28 @@ def sendChecksum(s, msg, buffer_size, host, port):
 
 def startTransmission(s, buffer_size, HOST, PORT):
     connected = False
+    print('trying connect')
     while (not connected):
 
         s.sendto(ArqPacket(1, 3, 1, b"SYN").toBytes(), (HOST, PORT))
-        recv_buffer = True
-        tout_count = 0
-        while recv_buffer == True:
+        while True:
             try:
                 data, addr = s.recvfrom(buffer_size)
                 recv_packet = ArqPacket.fromBytes(data)
+                print(recv_packet)
                 if (recv_packet.pck_type == 1 and recv_packet.msg_type == 4):
                     print(f"Received SYN-ACK: {recv_packet}")
+                    print('connected')
                     connected = True
                     return connected
                 else:
                     print(f"Received packet: {recv_packet}")
-            except socket.timeout:
-                tout_count += 1
-                print("Timeout, resending")
-                s.sendto(ArqPacket(1, 3, 1, b"SYN").toBytes(), (HOST, PORT))
+            except TimeoutError:
+                print('Timeout while connecting')
+                break
+    
 
-                if (tout_count > 4):
-                    print("Too many timeouts, disconnecting")
-                    recv_buffer = False
-                continue
+    print('connected')
     return connected
 
 

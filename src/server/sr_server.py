@@ -28,14 +28,19 @@ def handle_packet(data, addr):
     global st1
     global i 
     packet = ArqPacket.fromBytes(data)
-    time.sleep(Arq.latency)
+    time.sleep(Arq.latency//2)
 
-    ## TODO only for test
+    # Just to prevent out of bounds
+    if (i >= Arq.random_values.__len__()):
+        i = 0 
+
     i += 1
-    if (i % 10 == 2 or i%10 == 3 or i%10 == 5 or i%10 == 4):
-    
-        print(f"Packet {packet.seq} lost")
+    ## packet loss
+    if Arq.generatePacketLoss(i):
+        print(f"Packet loss for packet {packet}")
         return
+
+
 
     st = time.time()
     if packet.checkChecksum():

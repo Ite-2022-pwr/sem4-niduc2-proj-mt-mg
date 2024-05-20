@@ -15,7 +15,9 @@ class RandomNumberGenerator:
         self.__amount = amount
         self.__seed = self.generate_seed()
 
-        self.example()
+        #self.gen_number()
+
+        #self.example()
 
         if self.check_values() == False:
             print(Fore.RED, "[-] Provided values are incorrect. Exiting...", Style.RESET_ALL)
@@ -26,14 +28,30 @@ class RandomNumberGenerator:
             r_tmp = 0
             print()
 
-    def example(self):
+
+    def gen_number(self):
+        r_previous = self.__seed
+        val_tmp = (self.__mnoznik*r_previous + self.__przyrost) % self.__modulus
+        u_val = (val_tmp/(self.__modulus-1))*self.__modulus
+        
+
+        return u_val
+
+
+    def gen_numbers(self):
+        tmp = 0
+        values = []
         r_previous = self.__seed
         for i in range(self.__amount):
             val_tmp = (self.__mnoznik*r_previous + self.__przyrost) % self.__modulus
             u_val = (val_tmp/(self.__modulus-1))*self.__modulus
-            print(Fore.GREEN, f"R{i+1} = {self.__mnoznik * r_previous + 1} mod {self.__modulus} = {int(u_val)}", Style.RESET_ALL)
+            #print(Fore.GREEN, f"R{i+1} = {self.__mnoznik * r_previous + 1} mod {self.__modulus} = {int(u_val)}", Style.RESET_ALL)
+            
+            values.append(int(u_val))        
+    
             # print(int(u_val))
             r_previous = u_val
+        return values
 
     def generate_seed(self) -> int:
         return int(time.time())
@@ -55,4 +73,6 @@ class RandomNumberGenerator:
 
 
 if __name__ == '__main__':
-    rng = RandomNumberGenerator(8, 30)
+    rng = RandomNumberGenerator(1000, 10000)
+    #print (rng.gen_number())
+    print(rng.gen_numbers())
