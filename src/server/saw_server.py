@@ -47,7 +47,6 @@ def handle_packet(data, addr):
     if (packet.msg_type == 0): # If this is data message, we are going to add this do the dict
         if packet.checkChecksum():
             msg_dict[packet.seq] = packet.getData()
-            #time.sleep(3)
             # Send ACK
             s.sendto(ArqPacket(1, 1, packet.seq, b"ACK").toBytes(), addr)
             #print(f"Sending ACK to {addr}")
