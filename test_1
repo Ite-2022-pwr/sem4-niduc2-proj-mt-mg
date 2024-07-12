@@ -126,7 +126,7 @@ random_values = RNG.RandomNumberGenerator(1000, 1000).gen_numbers()
 76,64
 70,64
 79,64
-70,64
+70,64  
 72,64
 73,64
 71,64
